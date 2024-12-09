@@ -108,9 +108,8 @@ const PayStackForm = () => {
 
   const handlePaystackPayment = async () => {
     setIsLoading(true);
-
+  
     try {
-      // Initialize Paystack payment
       const response = await axios.post(
         `${BACKEND_URL}/create-payment-intent`,
         {
@@ -122,17 +121,18 @@ const PayStackForm = () => {
           headers: {
             "Content-Type": "application/json",
           },
+          withCredentials: true, // Ensure cookies are sent if needed
         }
       );
+  
       const { authorizationUrl, reference } = response.data;
       const paystackHandler = window.PaystackPop.setup({
-        key: process.env.REACT_APP_PAYSTACK_PUBLIC_KEY, // Paystack public key
+        key: process.env.REACT_APP_PAYSTACK_PUBLIC_KEY,
         email: userEmail,
-        amount: cartTotalAmount * 100, // Convert to kobo
-        ref: reference, // Reference generated from the backend
+        amount: cartTotalAmount * 100,
+        ref: reference,
         currency: "NGN",
         callback: function (response) {
-          // Payment complete, trigger verification
           verifyPayment(response.reference);
         },
         onClose: function () {
@@ -141,8 +141,8 @@ const PayStackForm = () => {
           setIsLoading(false);
         },
       });
-
-      paystackHandler.openIframe(); // Open the Paystack iframe inline
+  
+      paystackHandler.openIframe();
     } catch (error) {
       console.error("Payment initialization error:", error);
       toast.error(
@@ -151,6 +151,7 @@ const PayStackForm = () => {
       setIsLoading(false);
     }
   };
+  
 
   return (
     <section>
