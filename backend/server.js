@@ -25,7 +25,8 @@ module.exports = { admin, db };
 // CORS Configuration
 const allowedOrigins = [
   "https://zoestore.vercel.app", // Add your frontend origin
-  "http://localhost:4243",        // For local development
+  "http://localhost:4243",
+          // For local development
 ];
 
 
