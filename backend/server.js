@@ -24,7 +24,7 @@ module.exports = { admin, db };
 
 // CORS Configuration
 const allowedOrigins = [
-  "https://zoestore.vercel.app", // Add your frontend origin
+  process.env.FRONTEND_URL ||"https://zoestore.vercel.app", // Add your frontend origin
   "http://localhost:4243",
           // For local development
 ];
@@ -98,7 +98,7 @@ app.post("/create-payment-intent", async (req, res) => {
       reference: response.data.data.reference,  // Paystack reference
       
     });
-    console.log("Generated reference:", response.data.data.reference);
+    //console.log("Generated reference:", response.data.data.reference);
   } catch (error) {
     //console.error("Error initializing payment:", error.response?.data || error.message);
     res.status(500).send({
@@ -124,7 +124,7 @@ app.post("/verify-payment/:reference", async (req, res) => {
       }
     );
 
-    console.log("Paystack verification response:", response.data);
+    //console.log("Paystack verification response:", response.data);
 
     if (response.data.data.status === "success") {
       // Prepare order object
