@@ -1,19 +1,17 @@
-// server/server.js
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
-
-const app = express();
 const path = require("path");
 const admin = require("firebase-admin");
+const serverless = require("serverless-http");
+
+const app = express();
+
+// Firebase Service Account
 const serviceAccount = JSON.parse(
-  Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_KEY, 'base64').toString('utf-8')
+  Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_KEY, "base64").toString("utf-8")
 );
-
-
-//console.log("Service Account Key:", serviceAccount);
-
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -24,15 +22,14 @@ module.exports = { admin, db };
 
 // CORS Configuration
 const allowedOrigins = [
-  process.env.FRONTEND_URL ||"https://zoestore.vercel.app", // Add your frontend origin
-  "http://localhost:4243",
-          // For local development
+  process.env.FRONTEND_URL || "https://zoestore.vercel.app", // Add your frontend origin
+  "http://localhost:4243", // For local development
 ];
-
 
 app.use(
   cors({
     origin: function (origin, callback) {
+      console.log("Origin: ", origin);
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -41,16 +38,15 @@ app.use(
     },
     credentials: true, // If using cookies or authorization headers
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allowed methods
-    allowedHeaders: ["Content-Type", "Authorization"],    // Allowed headers
+    allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
   })
 );
 
 // Handle preflight requests
 app.options("*", cors());
+
 // Body Parser Middleware
 app.use(express.json());
-
-
 
 // Root Route
 app.get("/", (req, res) => {
@@ -95,18 +91,15 @@ app.post("/create-payment-intent", async (req, res) => {
 
     res.send({
       authorizationUrl: response.data.data.authorization_url,
-      reference: response.data.data.reference,  // Paystack reference
-      
+      reference: response.data.data.reference, // Paystack reference
     });
-    //console.log("Generated reference:", response.data.data.reference);
   } catch (error) {
-    //console.error("Error initializing payment:", error.response?.data || error.message);
+    console.error("Error initializing payment:", error.response?.data || error.message);
     res.status(500).send({
       message: "Payment initialization failed. Please try again.",
       error: error.response?.data || error.message,
     });
   }
-  
 });
 
 // Verify Payment
@@ -123,8 +116,6 @@ app.post("/verify-payment/:reference", async (req, res) => {
         },
       }
     );
-
-    //console.log("Paystack verification response:", response.data);
 
     if (response.data.data.status === "success") {
       // Prepare order object
@@ -166,14 +157,13 @@ app.post("/verify-payment/:reference", async (req, res) => {
     });
   }
 });
-//console.log("Paystack Secret Key:", process.env.PAYSTACK_SECRET_KEY);
-
 
 // Calculate Order Amount
 const calculateOrderAmount = (items) => {
   const total = items.reduce((acc, item) => acc + item.price * item.cartQuantity, 0);
   return total * 100; // Convert to Kobo
 };
+
 // Serve Static Files in Production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static("build"));
@@ -182,6 +172,11 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-// Start Server
-const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Export the handler for Vercel
+module.exports.handler = serverless(app);
+
+// Local server start (for development purposes)
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 5001;
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}

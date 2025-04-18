@@ -33,7 +33,7 @@
   },
   "scripts": {
     "start:f": "set PORT=4243 && react-scripts start",
-    "start:b": "set PORT=5001 && nodemon server.js",
+    "start:b": "set PORT=5001 && nodemon ../backend/server.js",
     "start": "concurrently \"npm run start:b\" \"npm run start:f\"",
     "start:t": "node server.js",
     "build": "react-scripts build",
